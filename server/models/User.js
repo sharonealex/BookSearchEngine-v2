@@ -1,6 +1,6 @@
 const {Schema, model} = require("mongoose");
 const bcrypt = require("bcrypt");
-import { isEmail } from 'validator';
+const { isEmail } = require ('validator');
 
 //import subdocument Book.js schema
 const bookSchema = require("./Book");
