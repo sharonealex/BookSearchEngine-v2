@@ -1,59 +1,57 @@
-const {Schema, model} = require("mongoose");
-const bcrypt = require("bcrypt");
-const { isEmail } = require ('validator');
+const { Schema, model } = require('mongoose');
+const bcrypt = require('bcrypt');
 
-//import subdocument Book.js schema
-const bookSchema = require("./Book");
+// import schema from Book.js
+const bookSchema = require('./Book');
 
 const userSchema = new Schema(
-    {
-        username: {
-            type: String,
-            required: true,
-            unique: true
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-            validate: [isEmail, "invalid email"]
-        },
-        password: {
-            type: String,
-            required: true
-        },
-        savedBooks: [bookSchema]
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
     },
-    {
-        toJSON: {
-            virtuals: true
-        }
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      match: [/.+@.+\..+/, 'Must use a valid email address'],
     },
+    password: {
+      type: String,
+      required: true,
+    },
+    // set savedBooks to be an array of data that adheres to the bookSchema
+    savedBooks: [bookSchema],
+  },
+  // set this to use virtual below
+  {
+    toJSON: {
+      virtuals: true,
+    },
+  }
 );
-//pre save middleware hook for schema for before saving the field into the database.
-userSchema.pre('save', async function(next){
- if(this.isNew || this.isModified("password")){
-     const saltRounds = 10;
-     this.password = await bcrypt.hash(this.password, saltRounds);
- };
- next();
+
+// hash user password
+userSchema.pre('save', async function (next) {
+  if (this.isNew || this.isModified('password')) {
+    const saltRounds = 10;
+    this.password = await bcrypt.hash(this.password, saltRounds);
+  }
+
+  next();
 });
 
+// custom method to compare and validate password for logging in
+userSchema.methods.isCorrectPassword = async function (password) {
+  return bcrypt.compare(password, this.password);
+};
 
-//isNew and isModified are schemas prototype methods. Document.prototype.$isNew, Document.prototype.toString(), Document.prototype.$parent() are examples
-//Schema.prototype.method() will add an instance method to documents constructed from Models compiled from this schema.
-
-//Each Schema can define instance and static methods for its model.
-
-userSchema.methods.isCorrectPassword = async function(password){
- return bcrypt.compare(password, this.password)
-}//custom method to compare instance password for the logged in user
-
-userSchema.virtual('bookCount').get(function(){
-    return this.savedBooks.length;
+// when we query a user, we'll also get another field called `bookCount` with the number of saved books we have
+userSchema.virtual('bookCount').get(function () {
+  return this.savedBooks.length;
 });
 
 const User = model('User', userSchema);
 
 module.exports = User;
-

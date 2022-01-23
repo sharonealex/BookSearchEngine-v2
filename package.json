@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/sharonealex/BookSearchEngine-v2#readme",
   "dependencies": {
-    "concurrently": "^7.0.0"
+    "concurrently": "^7.0.0",
+    "cors": "^2.8.5"
   }
 }

@@ -14,6 +14,8 @@ module.exports = {
     },
 //create user , sign a token for this user and send it back to the SignUpForm
     async createUser({body}, res){
+        console.log("hey inside controller")
+        console.log(User)
         const user = await User.create(body);
         if(!user){
             return res.status(400).json({message: 'something is wrong'});
@@ -36,21 +38,26 @@ module.exports = {
     },
     //save a book to a users savedBooks field by adding to to the set(to prevent duplicates)
         //user comes from req.user createdin the auth middleware function.
-    async saveBook({user, body}){
-        console.log(user);
+    async saveBook({user, body}, res){
+        const userDb = await User.findOne({$or: [{username: "sharonealex1232"}, {email: body.email}]});
+        console.log(userDb)
+        console.log("inside save book")
+        console.log("user", user, "--->", body);
         try{
-            const updatedUser = await user.findOneAndUpdate(
-                {_id: user._id},
+            const updatedUser = await User.findOneAndUpdate(
+                {_id: userDb._id},
                 {$addToSet: {savedBooks: body}},
                 {new: true, runValidators: true}
             );
+            console.log("after save",updatedUser)
             return res.json(updatedUser);
         }catch(e){
-            return res.status(400).json(err)
+            console.log(e)
+            return res.status(400).json(e)
         }
     },
     async deleteBook({user, params}, res){
-        const deletedUser = await user.findOneAndDelete(
+        const deletedUser = await User.findOneAndDelete(
             {_id: user._id},
             {$pull: {savedBooks: {bookId: params.bookId}}},
             {new: true}
